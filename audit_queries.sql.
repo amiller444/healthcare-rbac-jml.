@@ -13,3 +13,25 @@ JOIN user_access ua ON e.employee_id = ua.employee_id
 JOIN permissions p ON ua.permission_id = p.permission_id
 WHERE e.status = 'Terminated'
 ORDER BY e.last_name, p.permission_name;
+
+
+-- AUDIT 2: Active access that goes beyond the employee's role
+-- Why it matters: giving people more access than their job requires
+-- (privilege creep) breaks the "minimum necessary" principle in HIPAA
+-- and creates fraud risk, especially around billing and ledger edits.
+-- Compares what each person HAS (user_access) against what their
+-- role SHOULD have (role_permissions).
+-- Expected result on the sample data: 2 rows
+--   James Carter (Front Desk) has Edit Ledger
+--   Devon Brooks (Hygienist) has Run Reports
+
+SELECT e.first_name, e.last_name, r.role_name, p.permission_name
+FROM employees e
+JOIN roles r ON e.role_id = r.role_id
+JOIN user_access ua ON e.employee_id = ua.employee_id
+JOIN permissions p ON ua.permission_id = p.permission_id
+LEFT JOIN role_permissions rp
+  ON rp.role_id = e.role_id
+  AND rp.permission_id = ua.permission_id
+WHERE rp.role_id IS NULL
+ORDER BY e.last_name, p.permission_name;
