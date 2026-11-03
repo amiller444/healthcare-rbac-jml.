@@ -1,0 +1,15 @@
+-- Audit queries for the healthcare RBAC project (fake data only)
+-- Run schema.sql first to build the tables.
+
+-- AUDIT 1: Terminated employees who still have system access
+-- Why it matters: access should be removed at termination.
+-- Leftover access is a security risk and a HIPAA concern.
+-- Expected result on the sample data: 5 rows
+--   Tasha Green (2 permissions) and Marcus Reed (3 permissions)
+
+SELECT e.first_name, e.last_name, e.termination_date, p.permission_name
+FROM employees e
+JOIN user_access ua ON e.employee_id = ua.employee_id
+JOIN permissions p ON ua.permission_id = p.permission_id
+WHERE e.status = 'Terminated'
+ORDER BY e.last_name, p.permission_name;
